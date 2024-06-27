@@ -33,7 +33,8 @@ int main(int argc, char** argv) {
 
     args::ArgumentParser parser("MeasureSleep Version " + version + " - GPLv3\nGitHub - https://github.com/valleyofdoom\n");
     args::HelpFlag help(parser, "help", "display this help menu", { "help" });
-    args::ValueFlag<int> samples(parser, "", "measure the Sleep(1) deltas for a specified amount of samples then compute the maximum, average, minimum and stdev from the collected samples", { "samples" });
+    args::ValueFlag<int> sleep_n(parser, "", "determine dwMilliseconds for the Sleep function", { "sleep_n" });
+    args::ValueFlag<int> samples(parser, "", "measure the Sleep(n) deltas for a specified amount of samples then compute the maximum, average, minimum and stdev from the collected samples", { "samples" });
 
     try {
         parser.ParseCLI(argc, argv);
@@ -48,6 +49,12 @@ int main(int argc, char** argv) {
         std::cerr << e.what();
         std::cerr << parser.Help();
         return 1;
+    }
+
+    int sleep_duration = 1;
+
+    if (sleep_n) {
+        sleep_duration = args::get(sleep_n);
     }
 
     if (samples && args::get(samples) < 2) {
@@ -73,16 +80,16 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        // benchmark Sleep(1)
+        // benchmark Sleep(n)
         QueryPerformanceCounter(&start);
-        Sleep(1);
+        Sleep(sleep_duration);
         QueryPerformanceCounter(&end);
 
         double delta_s = (double)(end.QuadPart - start.QuadPart) / freq.QuadPart;
         double delta_ms = delta_s * 1000;
         double delta_from_sleep = delta_ms - 1;
 
-        std::cout << std::fixed << std::setprecision(4) << "Resolution: " << (current_resolution / 10000.0) << "ms, Sleep(1) slept " << delta_ms << "ms (delta: " << delta_from_sleep << ")\n";
+        std::cout << std::fixed << std::setprecision(4) << "Resolution: " << (current_resolution / 10000.0) << "ms, Sleep(n=" << sleep_duration << ") slept " << delta_ms << "ms (delta: " << delta_from_sleep << ")\n";
 
         if (samples) {
             sleep_delays.push_back(delta_from_sleep);
