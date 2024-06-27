@@ -1,0 +1,61 @@
+name: Create release
+run-name: Create release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version of the program to build. This will be used for the tag and release name."
+        required: true
+
+      target:
+        description: "Select target to build."
+        required: true
+        default: "SetTimerResolution"
+        type: choice
+        options:
+          - "SetTimerResolution"
+          - "MeasureSleep"
+
+      pre-release:
+        description: "Pre-release"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-windows
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up MSVC environment
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Set up vcpkg
+        run: |
+          git clone https://github.com/Microsoft/vcpkg.git
+          .\vcpkg\bootstrap-vcpkg.bat
+          .\vcpkg\vcpkg.exe integrate install
+
+      - name: Install dependencies (vspkg.json)
+        run: .\vcpkg\vcpkg.exe install
+
+      - name: Build executable
+        run: MSBuild.exe .\TimerResolution.sln -p:Configuration=Release -p:Platform=x64 -t:${{ inputs.target }}
+
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ inputs.target }}-v${{ inputs.version }}
+          name: ${{ inputs.target }} v${{ inputs.version }}
+          prerelease: ${{ inputs.pre-release }}
+          artifacts: ./x64/Release/${{ inputs.target }}.exe
