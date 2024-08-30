@@ -46,7 +46,7 @@ jobs:
           .\vcpkg\bootstrap-vcpkg.bat
           .\vcpkg\vcpkg.exe integrate install
 
-      - name: Install dependencies (vspkg.json)
+      - name: Install dependencies (vcpkg.json)
         run: .\vcpkg\vcpkg.exe install
 
       - name: Build executable
