@@ -4,7 +4,6 @@
 #include <windows.h>
 #include <tlhelp32.h>
 
-extern "C" NTSYSAPI NTSTATUS NTAPI NtQueryTimerResolution(PULONG MinimumResolution, PULONG MaximumResolution, PULONG CurrentResolution);
 extern "C" NTSYSAPI NTSTATUS NTAPI NtSetTimerResolution(ULONG DesiredResolution, BOOLEAN SetResolution, PULONG CurrentResolution);
 
 typedef BOOL(WINAPI* PSET_PROCESS_INFORMATION)(HANDLE, PROCESS_INFORMATION_CLASS, LPVOID, DWORD);
@@ -68,8 +67,6 @@ int main(int argc, char** argv) {
         FreeConsole();
     }
 
-    ULONG minimum_resolution, maximum_resolution, current_resolution;
-
     HMODULE kernel32 = LoadLibrary(L"kernel32.dll");
 
     if (!kernel32) {
@@ -91,10 +88,7 @@ int main(int argc, char** argv) {
         SetProcessInformation(GetCurrentProcess(), ProcessPowerThrottling, &PowerThrottling, sizeof(PowerThrottling));
     }
 
-    if (NtQueryTimerResolution(&minimum_resolution, &maximum_resolution, &current_resolution)) {
-        std::cerr << "NtQueryTimerResolution failed\n";
-        return 1;
-    }
+    ULONG current_resolution;
 
     if (NtSetTimerResolution(args::get(resolution), true, &current_resolution)) {
         std::cerr << "NtSetTimerResolution failed\n";
