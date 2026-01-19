@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
     }
 
     if (samples) {
-        // discard first trial since it is almost always invalid
+        // discard first trial due to first sleep call mid-tick
         sleep_delays.erase(sleep_delays.begin());
 
         sort(sleep_delays.begin(), sleep_delays.end());
